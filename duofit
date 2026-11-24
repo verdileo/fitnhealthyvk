@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f7a5a">
+<title>DuoFit – Verdi &amp; Nonit</title>
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--tx:#1c2420;--mu:#6b756f;--bd:#e2e6e0;--ac:#1f7a5a;--acs:#e3f2ec;--ok:#1f7a5a;--wn:#b7791f;--bad:#c0392b;--sg:#c2410c;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#121715;--card:#1b221f;--tx:#e8eeea;--mu:#93a09a;--bd:#2c3631;--ac:#4cc29a;--acs:#1d3329;--ok:#4cc29a;--wn:#e6b34f;--bad:#ef7a6c;--sg:#f59e6b;color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.w{max-width:560px;margin:0 auto;padding:12px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+h1{font-size:19px;margin:0}
+.chip{border:1px solid var(--bd);background:var(--card);color:var(--mu);border-radius:99px;padding:4px 12px;cursor:pointer;font:inherit;font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:10px 0}
+.big{font-size:32px;font-weight:700;line-height:1.1}
+.mu{color:var(--mu);font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bar{height:9px;background:var(--bd);border-radius:9px;overflow:hidden;margin:6px 0}
+.bar>i{display:block;height:100%;border-radius:9px}
+.ok{color:var(--ok)}.wn{color:var(--wn)}.bad{color:var(--bad)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:12px;padding:11px 14px;font-weight:600;width:100%}
+.btn.s{background:var(--acs);color:var(--ac)}
+.btn.g{background:transparent;color:var(--mu);border:1px solid var(--bd)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 0;border-top:1px solid var(--bd)}
+.item:first-of-type{border-top:0}
+.item .t{flex:1;min-width:0}
+.tag{font-size:11px;background:var(--acs);color:var(--ac);border-radius:6px;padding:1px 6px;margin-right:6px}
+.x{background:var(--bg);border:1px solid var(--bd);border-radius:8px;font-size:15px;padding:4px 8px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;background:none;border:0;padding:9px 0 7px;color:var(--mu);font-size:11px}
+nav button b{display:block;font-size:18px}
+nav button.on{color:var(--ac);font-weight:700}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:20}
+.sheet.on{display:flex}
+.sheet>div{background:var(--card);width:100%;max-width:560px;margin:0 auto;border-radius:20px 20px 0 0;padding:16px;max-height:90%;overflow:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+label{display:block;font-size:12px;color:var(--mu);margin:8px 0 2px}
+input,select{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+input[type=checkbox]{width:auto}
+.pre{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px}
+.pre .chip{white-space:nowrap}
+.ban{background:var(--acs);border:1px solid var(--ac);border-radius:12px;padding:10px 12px;margin:8px 0;display:flex;justify-content:space-between;gap:8px;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+td,th{padding:6px 3px;border-top:1px solid var(--bd);text-align:center}th{color:var(--mu);font-weight:500;border:0}
+td:first-child,th:first-child{text-align:left}
+.scr{overflow-x:auto}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:8px 14px;border-radius:99px;font-size:13px;display:none;z-index:30;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="w">
+<header><h1>💪 DuoFit</h1><div><span class="chip" id="sync" onclick="sync()">…</span> <span class="chip" id="who" onclick="switchUser()"></span></div></header>
+<div id="inbox"></div>
+<div id="view"><div class="card mu">Memuat…</div></div>
+</div>
+<nav id="nav"></nav>
+<div class="sheet" id="sheet"><div id="sb"></div></div>
+<div id="toast"></div>
+<script>
+/* ===== KONFIGURASI: tempel URL Web App Apps Script Anda ===== */
+const API='https://script.google.com/macros/s/AKfycbw1vp553IwsUh9FdaGpCJfhrrp75Oda5GMijg2kuhvtXCNs8Z-z_ArhIt6jal-kESnY1Q/exec';
+const POLL_MS=20000;
+/* ============================================================ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const fmt=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const shift=(s,n)=>{const d=new Date(s+'T12:00:00');d.setDate(d.getDate()+n);return fmt(d)};
+const nice=s=>new Date(s+'T12:00:00').toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'});
+const r1=n=>Math.round(n*10)/10;
+const num=v=>{const n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n};
+const uid=p=>p+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+const TODAY=fmt(new Date());
+const NAMES={verdi:'Verdi',nonit:'Nonit'};
+const blank=()=>({profiles:{},nudge:null,presets:[],logs:[],deleted:{},meta:{}});
+const S={me:null,tok:null,date:TODAY,tab:'hari',db:blank()};
+const other=w=>w==='verdi'?'nonit':'verdi';
+const prof=w=>({name:NAMES[w],calTarget:2000,protTarget:100,sugarTarget:w==='verdi'?36:25,...(S.db.profiles[w]||{})});
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
+function clean(db){const d={...blank(),...db};d.profiles=JSON.parse(JSON.stringify(d.profiles||{}));for(const k in d.profiles)delete d.profiles[k].pin;return d}
+function toast(t,undo){const e=$('#toast');e.innerHTML=esc(t)+(undo?' <b id="tu" style="text-decoration:underline;margin-left:8px;cursor:pointer">Batalkan</b>':'');e.style.display='block';if(undo)$('#tu').onclick=()=>{undo();e.style.display='none'};clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',undo?5000:2200)}
+
+/* ---------- komunikasi dengan Apps Script ---------- */
+async function api(body){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:S.tok,...body})});
+  return r.json();
+}
+function merge(a,b){ // a=server, b=lokal; seri -> lokal menang
+  const r=blank();
+  r.deleted={...(a.deleted||{})};for(const k in (b.deleted||{}))r.deleted[k]=Math.max(r.deleted[k]||0,b.deleted[k]);
+  const lst=(x,y)=>{const m={};[...(x||[]),...(y||[])].forEach(i=>{const o=m[i.id];if(!o||(i.updatedAt||0)>=(o.updatedAt||0))m[i.id]=i});return Object.values(m).filter(i=>!(r.deleted[i.id]&&r.deleted[i.id]>=(i.updatedAt||0)))};
+  r.logs=lst(a.logs,b.logs);r.presets=lst(a.presets,b.presets);
+  const ma=a.meta||{},mb=b.meta||{},pa=Object.keys(a.profiles||{}).length,pb=Object.keys(b.profiles||{}).length;
+  r.profiles=(pb&&(mb.profilesAt||0)>=(ma.profilesAt||0))||!pa?(b.profiles||{}):a.profiles;
+  r.nudge=(mb.nudgeAt||0)>=(ma.nudgeAt||0)?(b.nudge??a.nudge??null):(a.nudge??null);
+  r.meta={profilesAt:Math.max(ma.profilesAt||0,mb.profilesAt||0),nudgeAt:Math.max(ma.nudgeAt||0,mb.nudgeAt||0)};
+  return clean(r);
+}
+function ahead(rem,m){
+  const idx=l=>Object.fromEntries((l||[]).map(i=>[i.id,i]));
+  const ar=(x,y)=>{const o=idx(y);return x.some(i=>!o[i.id]||(i.updatedAt||0)>(o[i.id].updatedAt||0))};
+  return ar(m.logs,rem.logs)||ar(m.presets,rem.presets)||Object.keys(m.deleted).some(k=>!((rem.deleted||{})[k]))
+   ||(m.meta.profilesAt||0)>((rem.meta||{}).profilesAt||0)||(m.meta.nudgeAt||0)>((rem.meta||{}).nudgeAt||0);
+}
+let busy=false,again=false,dirty=false;
+const setSt=(t,c)=>{const e=$('#sync');e.textContent=t;e.style.color=c||''};
+async function sync(){
+  if(!S.tok)return;
+  if(busy){again=true;return}
+  busy=true;setSt('⟳ sinkron…');
+  try{
+    const j=await api({action:'load'});
+    if(j.status==='unauthorized'){busy=false;return showLogin('Sesi berakhir, masuk lagi.')}
+    if(j.status!=='ok')throw new Error(j.message||'gagal');
+    const rem=clean(j.state||blank()),m=merge(rem,S.db),need=dirty||ahead(rem,m);
+    S.db=m;
+    if(need){
+      dirty=false;
+      try{
+        const p=await api({action:'save',state:m});
+        if(p.status==='unauthorized'){busy=false;return showLogin('Sesi berakhir, masuk lagi.')}
+        if(p.status!=='ok')throw new Error(p.message||'gagal simpan');
+        S.db=merge(clean(p.state),S.db);
+      }catch(e){dirty=true;throw e}
+    }
+    ls('fd3_db',JSON.stringify(S.db));setSt('● tersinkron','var(--ok)');
+  }catch(e){setSt('⚠ offline – ketuk untuk ulangi','var(--bad)')}
+  busy=false;render();
+  if(again){again=false;sync()}
+}
+let t0;function persist(){dirty=true;ls('fd3_db',JSON.stringify(S.db));clearTimeout(t0);t0=setTimeout(sync,500)}
+
+/* ---------- perhitungan ---------- */
+const dayLogs=(w,d)=>S.db.logs.filter(l=>l.user===w&&l.date===d);
+function tot(w,d){let k=0,p=0,s=0,b=0,m=0,ns=0;const L=dayLogs(w,d);L.forEach(l=>{if(l.kind==='workout'){b+=+l.cal||0;m+=+l.dur||0}else{k+=+l.cal||0;p+=+l.prot||0;if(l.sugar==null)ns++;else s+=+l.sugar||0}});return{k,p,s,b,m,ns,n:L.length}}
+const lvl=(v,t,hi)=>hi?(v>t?'bad':v>=t*.8?'wn':'ok'):(v>=t?'ok':v>=t*.8?'wn':'bad');
+function summary(w,d){
+  const p=prof(w),t=tot(w,d),net=t.k-t.b,diff=net-p.calTarget,remain=p.calTarget-net;
+  const cc=Math.abs(diff)<=150?'ok':diff>0?'bad':'wn';
+  const kp=Math.max(0,Math.min(100,net/p.calTarget*100)),pp=Math.min(100,t.p/p.protTarget*100),sp=p.sugarTarget?Math.min(100,t.s/p.sugarTarget*100):0;
+  const pc=lvl(t.p,p.protTarget,false),sc=lvl(t.s,p.sugarTarget,true);
+  const top=dayLogs(w,d).filter(l=>l.kind!=='workout'&&+l.sugar>0).sort((a,b)=>b.sugar-a.sugar).slice(0,3);
+  return `<div class="card"><div class="mu">${esc(p.name)} · ${nice(d)}</div>
+  <div class="big ${t.n?cc:''}">${diff>0?'Surplus':'Defisit'} ${Math.abs(Math.round(diff))} <span style="font-size:15px">kcal</span></div>
+  <div class="mu">Makan ${Math.round(t.k)} − olahraga ${Math.round(t.b)} = bersih ${Math.round(net)} · target ${p.calTarget}</div>
+  <div class="bar"><i style="width:${kp}%;background:var(--${remain<0?'bad':'ok'})"></i></div>
+  <div class="row"><span class="mu">Sisa jatah kalori</span><b class="${remain<0?'bad':''}">${remain<0?'lewat '+Math.round(-remain):Math.round(remain)} kcal</b></div>
+  <div class="row" style="margin-top:12px"><span>Protein</span><b class="${pc}">${r1(t.p)} / ${p.protTarget} g</b></div>
+  <div class="bar"><i style="width:${pp}%;background:var(--${pc})"></i></div>
+  <div class="row" style="margin-top:12px"><span>🍬 Gula</span><b class="${sc}">${r1(t.s)} / ${p.sugarTarget} g</b></div>
+  <div class="bar"><i style="width:${sp}%;background:var(--${sc})"></i></div>
+  <div class="mu">${t.s>p.sugarTarget?`Gula lewat batas ${r1(t.s-p.sugarTarget)} g. `:`Sisa batas gula ${r1(p.sugarTarget-t.s)} g. `}${t.ns?`${t.ns} makanan belum ada data gula. `:''}${top.length?'Sumber terbesar: '+top.map(l=>esc(l.title)+' ('+l.sugar+' g)').join(', ')+'.':''}</div>
+  <div class="mu" style="margin-top:4px">${p.protTarget-t.p>0?`Kurang protein ${r1(p.protTarget-t.p)} g`:'Target protein tercapai ✓'} · olahraga ${t.m} menit</div></div>`;
+}
+function lists(w,d,edit){
+  const L=dayLogs(w,d).sort((a,b)=>String(a.id).localeCompare(String(b.id))),F=L.filter(l=>l.kind!=='workout'),K=L.filter(l=>l.kind==='workout');
+  const it=l=>`<div class="item"><div class="t">${l.kind==='workout'?`<span class="tag">${l.dur||0} mnt</span>${esc(l.title)} · −${l.cal} kcal${l.note?`<div class="mu">${esc(l.note)}</div>`:''}`:`${esc(l.title)}<div class="mu">${l.cal} kcal · P ${l.prot||0} g ${l.sugar!=null?`· <span style="color:var(--sg)">gula ${l.sugar} g</span>`:'· gula ?'}</div>`}</div>${edit?`<button class="x" aria-label="Ubah" onclick="${l.kind==='workout'?'openWork':'openFood'}('${l.id}')">✏️</button><button class="x" aria-label="Hapus" onclick="delItem('logs','${l.id}')">🗑️</button>`:''}</div>`;
+  return `<div class="card"><b>🍽️ Makanan</b>${F.length?F.map(it).join(''):'<div class="mu" style="padding:8px 0">Belum ada catatan makan.</div>'}</div><div class="card"><b>🏋️ Aktivitas</b>${K.length?K.map(it).join(''):'<div class="mu" style="padding:8px 0">Belum ada aktivitas.</div>'}</div>`;
+}
+const dateNav=()=>`<div class="row"><button class="chip" onclick="goD(-1)">‹</button><b>${S.date===TODAY?'Hari ini':nice(S.date)}</b><button class="chip" onclick="goD(1)" ${S.date>=TODAY?'disabled':''}>›</button></div>`;
+function goD(n){S.date=shift(S.date,n);if(S.date>TODAY)S.date=TODAY;render()}
+
+function vHari(){return dateNav()+summary(S.me,S.date)+`<div class="grid"><button class="btn" onclick="openFood()">+ Makanan</button><button class="btn s" onclick="openWork()">+ Aktivitas</button></div>`+lists(S.me,S.date,true)}
+function vPasangan(){
+  const o=other(S.me),op=prof(o),t=tot(o,S.date),n=S.db.nudge;
+  return dateNav()+(!t.n?`<div class="card wn">⚠️ ${esc(op.name)} belum mencatat apa pun pada tanggal ini.</div>`:'')+summary(o,S.date)
+  +`<button class="btn" onclick="openNudge()">💬 Kirim pengingat / semangat ke ${esc(op.name)}</button>`+lists(o,S.date,false)
+  +(n?`<div class="card mu">Pesan terakhir: ${n.from===S.me?'kamu':esc(prof(n.from).name)} → ${n.to===S.me?'kamu':esc(prof(n.to).name)}: ${esc(n.text)} (${new Date(n.ts).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}${n.seen?', sudah dibaca':''})</div>`:'');
+}
+function vRiwayat(){
+  const days=[...Array(7)].map((_,i)=>shift(TODAY,-i));
+  const cell=w=>d=>{const t=tot(w,d),p=prof(w);if(!t.n)return'<td class="mu">–</td>';const diff=t.k-t.b-p.calTarget,c=Math.abs(diff)<=150?'ok':diff>0?'bad':'wn';
+    return `<td><b class="${c}">${diff>0?'+':''}${Math.round(diff)}</b><br><span class="${lvl(t.p,p.protTarget,false)}">P${Math.round(t.p)}</span> <span class="${lvl(t.s,p.sugarTarget,true)}">G${Math.round(t.s)}</span></td>`};
+  const avg=w=>{let n=0,a=0,b=0,c=0;days.forEach(d=>{const t=tot(w,d);if(t.n){n++;a+=t.k-t.b-prof(w).calTarget;b+=t.p;c+=t.s}});return n?`selisih rata-rata ${Math.round(a/n)} kcal · protein ${Math.round(b/n)} g · gula ${Math.round(c/n)} g (${n} hari)`:'belum ada data'};
+  return `<div class="card"><b>7 hari terakhir</b><div class="mu">Angka tebal = selisih kalori bersih terhadap target (+ surplus, − defisit). P = protein g, G = gula g.</div>
+  <div class="scr"><table><tr><th>Tanggal</th><th>Verdi</th><th>Nonit</th></tr>${days.map(d=>`<tr><td>${nice(d)}</td>${cell('verdi')(d)}${cell('nonit')(d)}</tr>`).join('')}</table></div></div>
+  <div class="card"><div><b>Verdi</b><div class="mu">${avg('verdi')}</div></div><div style="margin-top:8px"><b>Nonit</b><div class="mu">${avg('nonit')}</div></div></div>`;
+}
+function vPreset(){
+  const P=[...S.db.presets].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  return `<div class="card"><div class="row"><b>🍱 Preset makanan &amp; minuman</b></div><div class="mu">Daftar bersama (terlihat oleh Verdi dan Nonit). Isi dengan yang benar-benar rutin dikonsumsi.</div>
+  <button class="btn" style="margin:10px 0" onclick="openPreset()">+ Tambah preset</button>
+  ${P.length?P.map(x=>`<div class="item"><div class="t">${esc(x.name)}<div class="mu">${x.cal} kcal · P ${x.prot} g · gula ${x.sugar??'?'} g</div></div><button class="x" aria-label="Ubah" onclick="openPreset('${x.id}')">✏️</button><button class="x" aria-label="Hapus" onclick="delItem('presets','${x.id}')">🗑️</button></div>`).join(''):'<div class="mu">Belum ada preset.</div>'}</div>`;
+}
+function vSetelan(){
+  const p=prof(S.me);
+  return `<div class="card"><b>Target ${esc(p.name)}</b>
+  <label>Target kalori harian (kcal)</label><input id="s_c" type="number" inputmode="numeric" value="${p.calTarget}">
+  <label>Target protein (g)</label><input id="s_p" type="number" inputmode="numeric" value="${p.protTarget}">
+  <label>Batas gula harian (g)</label><input id="s_s" type="number" inputmode="numeric" value="${p.sugarTarget}">
+  <p class="mu">Acuan batas gula tambahan yang sering dipakai: sekitar 36 g (pria) dan 25 g (wanita) per hari menurut AHA; WHO menyarankan kurang dari 10% energi, idealnya kurang dari 5%. Sesuaikan dengan dokter bila ada diabetes/prediabetes.</p>
+  <button class="btn" onclick="saveProf()">Simpan target</button></div>
+  <div class="card"><b>Ganti PIN</b><div class="mu">PIN disimpan di server Apps Script, bukan di halaman ini.</div>
+  <label>PIN lama</label><input id="c_o" type="password" inputmode="numeric" autocomplete="off">
+  <label>PIN baru (4–8 angka)</label><input id="c_n" type="password" inputmode="numeric" autocomplete="off">
+  <button class="btn s" style="margin-top:10px" onclick="changePin()">Ganti PIN</button></div>
+  <button class="btn g" onclick="logout()">Keluar dari HP ini</button>`;
+}
+function render(){
+  if(!S.me||!S.tok)return;
+  $('#who').textContent=prof(S.me).name+' ▾';
+  const a=document.activeElement;
+  if(a&&a.tagName==='INPUT'&&$('#view').contains(a))return;
+  $('#view').innerHTML={hari:vHari,pasangan:vPasangan,riwayat:vRiwayat,preset:vPreset,setelan:vSetelan}[S.tab]();
+  $('#nav').innerHTML=[['hari','🍽️','Hari ini'],['pasangan','👫',prof(other(S.me)).name],['riwayat','📊','Riwayat'],['preset','🍱','Preset'],['setelan','⚙️','Target']].map(([k,i,l])=>`<button class="${S.tab===k?'on':''}" onclick="S.tab='${k}';render()"><b>${i}</b>${esc(l)}</button>`).join('');
+  const n=S.db.nudge;
+  $('#inbox').innerHTML=n&&n.to===S.me&&!n.seen?`<div class="ban"><span>💬 <b>${esc(prof(n.from).name)}:</b> ${esc(n.text)}</span><button class="chip" onclick="seenNudge()">Oke</button></div>`:'';
+}
+function seenNudge(){S.db.nudge={...S.db.nudge,seen:true};S.db.meta.nudgeAt=Date.now();persist();render()}
+function delItem(k,id){
+  const o=S.db[k].find(x=>x.id===id);if(!o)return;
+  S.db[k]=S.db[k].filter(x=>x.id!==id);S.db.deleted[id]=Date.now();persist();render();
+  toast('Dihapus',()=>{S.db[k].push({...o,updatedAt:Date.now()+1});persist();render()});
+}
+function saveProf(){
+  S.db.profiles={...S.db.profiles,[S.me]:{...prof(S.me),calTarget:num($('#s_c').value)||2000,protTarget:num($('#s_p').value)||100,sugarTarget:num($('#s_s').value)||25}};
+  S.db.meta.profilesAt=Date.now();persist();toast('Tersimpan ✓');document.activeElement.blur();render();
+}
+async function changePin(){
+  const o=$('#c_o').value.trim(),n=$('#c_n').value.trim();
+  if(!/^\d{4,8}$/.test(n)){toast('PIN baru harus 4–8 angka');return}
+  try{const j=await api({action:'changePin',oldPin:o,newPin:n});
+    if(j.status==='ok'){S.tok=j.token;ls('fd3_tok',j.token);$('#c_o').value='';$('#c_n').value='';toast('PIN diganti ✓')}
+    else if(j.status==='badpin')toast('PIN lama salah');else toast(j.message||'Gagal mengganti PIN');
+  }catch(e){toast('Tidak bisa terhubung ke server')}
+}
+
+/* ---------- sheet ---------- */
+const sheet=h=>{$('#sb').innerHTML=h;$('#sheet').classList.add('on')};
+const closeSheet=()=>$('#sheet').classList.remove('on');
+$('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet'&&S.tok)closeSheet()});
+const REF=[['Es teh manis 1 gls',90,0,24],['Kopi susu gula aren',150,3,20],['Boba / teh susu 500 ml',350,3,40],['Soda kaleng 330 ml',140,0,35],['Cendol 1 mangkuk',225,4,30],['Alpukat kocok',340,4,25],['Donat 1 bh',250,3,12],['Es krim 1 scoop',140,2,14],['Pisang 1 bh',105,1,14],['Jus buah + gula',150,1,28]];
+let PRE=[];
+function foodChips(){PRE=[...S.db.presets.map(x=>[x.name,x.cal,x.prot,x.sugar]),...REF];const n=S.db.presets.length;return PRE.map((x,i)=>`<button class="chip" onclick="pick(${i})">${i>=n?'🍬 ':''}${esc(x[0])}</button>`).join('')}
+function openFood(id){
+  const l=id?S.db.logs.find(x=>x.id===id):null;
+  sheet(`<b>${l?'Ubah':'Tambah'} makanan / minuman</b><div class="mu">Preset Anda, lalu 🍬 referensi gula (estimasi kasar, sesuaikan dengan label).</div><div class="pre">${foodChips()}</div>
+  <label>Tanggal</label><input id="f_d" type="date" max="${TODAY}" value="${l?.date||S.date}">
+  <label>Nama</label><input id="f_n" value="${esc(l?.title||'')}" placeholder="mis. Nasi + ayam bakar">
+  <div class="grid"><div><label>Kalori (kcal)</label><input id="f_k" type="number" inputmode="decimal" value="${l?.cal??''}"></div><div><label>Protein (g)</label><input id="f_p" type="number" inputmode="decimal" value="${l?.prot??''}"></div></div>
+  <label>Gula (g) · kosongkan bila tidak tahu</label><input id="f_s" type="number" inputmode="decimal" value="${l?.sugar??''}">
+  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="f_pre"> Simpan juga sebagai preset</label>
+  <div class="grid" style="margin-top:12px"><button class="btn g" onclick="closeSheet()">Batal</button><button class="btn" onclick="saveFood('${id||''}')">Simpan</button></div>`);
+}
+function pick(i){const x=PRE[i];$('#f_n').value=x[0];$('#f_k').value=x[1];$('#f_p').value=x[2];$('#f_s').value=x[3]??''}
+function saveFood(id){
+  const title=$('#f_n').value.trim();if(!title){toast('Isi nama makanan');return}
+  const sv=$('#f_s').value.trim(),o={title,cal:Math.round(num($('#f_k').value)),prot:r1(num($('#f_p').value)),date:$('#f_d').value||S.date,updatedAt:Date.now()};
+  if(sv!=='')o.sugar=r1(num(sv));
+  if(id){const l=S.db.logs.find(x=>x.id===id);Object.assign(l,o);if(sv==='')delete l.sugar}
+  else S.db.logs.push({id:uid('log'),user:S.me,kind:'food',...o});
+  if($('#f_pre').checked)S.db.presets.push({id:uid('p'),name:title,cal:o.cal,prot:o.prot,...(sv!==''?{sugar:o.sugar}:{}),updatedAt:Date.now()});
+  if(o.date!==S.date){S.date=o.date;toast('Dipindah ke '+nice(o.date))}
+  persist();closeSheet();render();
+}
+function openPreset(id){
+  const x=id?S.db.presets.find(p=>p.id===id):null;
+  sheet(`<b>${x?'Ubah':'Tambah'} preset</b>
+  <label>Nama (sebut porsi)</label><input id="p_n" value="${esc(x?.name||'')}" placeholder="mis. Nasi 1/2 + ayam kukus dada">
+  <div class="grid"><div><label>Kalori (kcal)</label><input id="p_k" type="number" inputmode="decimal" value="${x?.cal??''}"></div><div><label>Protein (g)</label><input id="p_p" type="number" inputmode="decimal" value="${x?.prot??''}"></div></div>
+  <label>Gula (g)</label><input id="p_s" type="number" inputmode="decimal" value="${x?.sugar??''}">
+  <div class="grid" style="margin-top:12px"><button class="btn g" onclick="closeSheet()">Batal</button><button class="btn" onclick="savePreset('${id||''}')">Simpan</button></div>`);
+}
+function savePreset(id){
+  const name=$('#p_n').value.trim();if(!name){toast('Isi nama preset');return}
+  const sv=$('#p_s').value.trim(),o={name,cal:Math.round(num($('#p_k').value)),prot:r1(num($('#p_p').value)),updatedAt:Date.now()};
+  if(sv!=='')o.sugar=r1(num(sv));
+  if(id){const x=S.db.presets.find(p=>p.id===id);Object.assign(x,o);if(sv==='')delete x.sugar}else S.db.presets.push({id:uid('p'),...o});
+  persist();closeSheet();render();
+}
+const WT=['Home Workout / Boxing','Elliptical / Lari','Padel / Tenis','Renang','Gym – beban','Jalan kaki','Bersepeda','HIIT','Yoga / Pilates','Lainnya'];
+function openWork(id){
+  const l=id?S.db.logs.find(x=>x.id===id):null,opts=l&&!WT.includes(l.title)?[l.title,...WT]:WT;
+  sheet(`<b>${l?'Ubah':'Tambah'} aktivitas</b>
+  <label>Tanggal</label><input id="w_d" type="date" max="${TODAY}" value="${l?.date||S.date}">
+  <label>Jenis</label><select id="w_t">${opts.map(s=>`<option ${l&&l.title===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+  <div class="grid"><div><label>Durasi (menit)</label><input id="w_m" type="number" inputmode="numeric" value="${l?.dur??''}"></div><div><label>Kalori terbakar</label><input id="w_k" type="number" inputmode="numeric" value="${l?.cal??''}"></div></div>
+  <label>Catatan</label><input id="w_n" value="${esc(l?.note||'')}">
+  <div class="grid" style="margin-top:12px"><button class="btn g" onclick="closeSheet()">Batal</button><button class="btn" onclick="saveWork('${id||''}')">Simpan</button></div>`);
+}
+function saveWork(id){
+  const o={title:$('#w_t').value,dur:Math.round(num($('#w_m').value)),cal:Math.round(num($('#w_k').value)),note:$('#w_n').value.trim(),date:$('#w_d').value||S.date,updatedAt:Date.now()};
+  if(!o.dur&&!o.cal){toast('Isi durasi atau kalori');return}
+  if(id)Object.assign(S.db.logs.find(x=>x.id===id),o);else S.db.logs.push({id:uid('log'),user:S.me,kind:'workout',...o});
+  if(o.date!==S.date){S.date=o.date;toast('Dipindah ke '+nice(o.date))}
+  persist();closeSheet();render();
+}
+const MSG=['Protein hari ini sudah cukup belum? 🥚','Gula hari ini sudah tinggi, kurangi minuman manis ya 🧋','Jangan lupa olahraga hari ini 💪','Jatah kalori hampir habis, hati-hati ya 🍟','Mantap, pertahankan! 👏','Sudah catat makan hari ini?'];
+function openNudge(){
+  sheet(`<b>Kirim ke ${esc(prof(other(S.me)).name)}</b><div style="margin:8px 0">${MSG.map((m,i)=>`<button class="btn s" style="margin:4px 0;text-align:left" onclick="sendNudge(MSG[${i}])">${esc(m)}</button>`).join('')}</div>
+  <label>Atau tulis sendiri</label><input id="n_t" placeholder="Tulis pesan…">
+  <div class="grid" style="margin-top:12px"><button class="btn g" onclick="closeSheet()">Batal</button><button class="btn" onclick="sendNudge($('#n_t').value)">Kirim</button></div>`);
+}
+function sendNudge(t){t=(t||'').trim();if(!t)return;S.db.nudge={id:uid('n'),from:S.me,to:other(S.me),text:t,ts:Date.now(),seen:false};S.db.meta.nudgeAt=Date.now();persist();closeSheet();render();toast('Terkirim ✓')}
+
+/* ---------- login PIN (diverifikasi server) ---------- */
+function showLogin(msg){
+  S.tok=null;ls('fd3_tok',null);window._u=null;
+  $('#nav').innerHTML='';$('#inbox').innerHTML='';
+  sheet(`<b>Masuk</b>${msg?`<div class="mu">${esc(msg)}</div>`:''}<div class="grid" style="margin:10px 0"><button class="btn s" id="u_verdi" onclick="selU('verdi')">Verdi</button><button class="btn s" id="u_nonit" onclick="selU('nonit')">Nonit</button></div>
+  <label>PIN</label><input id="l_pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN"><button class="btn" id="l_go" style="margin-top:12px" onclick="doLogin()">Masuk</button>`);
+}
+function selU(w){window._u=w;['verdi','nonit'].forEach(x=>$('#u_'+x).className='btn '+(x===w?'':'s'))}
+async function doLogin(){
+  const w=window._u,pin=$('#l_pin').value.trim();
+  if(!w){toast('Pilih nama dulu');return}if(!pin){toast('Isi PIN');return}
+  $('#l_go').disabled=true;
+  try{
+    const j=await api({action:'login',user:w,pin});
+    if(j.status==='ok'){S.me=w;S.tok=j.token;ls('fd3_me',w);ls('fd3_tok',j.token);closeSheet();S.tab='hari';$('#view').innerHTML='';render();sync()}
+    else if(j.status==='badpin')toast('PIN salah');else toast(j.message||'Gagal masuk');
+  }catch(e){toast('Tidak bisa terhubung ke server')}
+  const b=$('#l_go');if(b)b.disabled=false;
+}
+function switchUser(){if(confirm('Keluar dan ganti pengguna di HP ini?'))logout()}
+function logout(){ls('fd3_me',null);ls('fd3_tok',null);ls('fd3_db',null);S.me=null;S.tok=null;S.db=blank();$('#view').innerHTML='';showLogin()}
+
+/* ---------- mulai ---------- */
+(function(){
+  try{const c=JSON.parse(ls('fd3_db')||'null');if(c)S.db=clean(c)}catch(e){}
+  S.me=ls('fd3_me');S.tok=ls('fd3_tok');
+  if(S.me&&S.tok){render();sync()}else{$('#view').innerHTML='';showLogin()}
+  setInterval(()=>{if(S.tok&&!document.hidden)sync()},POLL_MS);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.tok)sync()});
+})();
+</script>
+</body>
+</html>
